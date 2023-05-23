@@ -1,3 +1,4 @@
+# Not Intended as Investment Advice
 # Fallen Angel Risk Premia
 
 ## Introduction 
@@ -19,3 +20,11 @@ The thesis behind the strategy comes from the following
 The majority of this codebase is written in R. There are a couple of small caveats that come Python since my bacground is in python programming. I've wokred on similar long short projects primarily in python [LSPair](https://github.com/diegodalvarez/LSPair) and LSPort (yet to be public). As I progress with this project I'll continue to shift the codebase closer to R since it is originally what I started with. 
 
 When creating this model I first started with fixed income ETFs and 50/50 long short weights. As I progress I'll incorporate beta hedging to be market neutral and more fundamental bottom-up techniques. Unlike Lombard Odier Investment Management, I plan to make the whole model systematic. I belive that with fundamental factors blended I will be able to accurately parse out better candidate securities and build a robust model. I may continue to work more on the markov regime switching model to allow for fixed income premias, but since the overall goal is of projects is to detect alphas I'm not sure if I'll continue down that path.
+
+## ETF Results
+We first start of with creating 50/50 spreads
+![image](https://github.com/diegodalvarez/FallenAngelRiskPremia/assets/48641554/8caa85db-3048-4c51-8180-cda63e55f8ca)
+Then we can use a Markov Regime Switching Model to pick which security to short (and pick up more risk fixed income risk premia)
+![image](https://github.com/diegodalvarez/FallenAngelRiskPremia/assets/48641554/c6df9d46-6eea-4ce6-8266-6272f91baf05)
+Then incorporating that strategy back into the L/S still use 50/50 spread
+![image](https://github.com/diegodalvarez/FallenAngelRiskPremia/assets/48641554/dafab123-0a6b-451a-95fa-8d8279882e73)
