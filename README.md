@@ -2,7 +2,7 @@
 # Fallen Angel Risk Premia
 
 ## Introduction 
-This is a sample portfolio strategy that looks at incorporating fallen angels with in a market neutral long short portfolio. The inspiration from this work came from a series of articles that were posted Lombard Odier Investment Management's team regarding adding fallen angel bond exposure. Since I personally believe that alpha streams stemming contrarian positions can provide superior returns, due to their dislcoation I've found some success when mining for this alpha. 
+This is a sample portfolio strategy that looks at incorporating fallen angels within a market neutral long short portfolio. The inspiration from this work came from a series of articles that were posted Lombard Odier Investment Management's team regarding adding fallen angel bond exposure. Since I personally believe that alpha streams stemming contrarian positions can provide superior returns, due to their dislcoation I've found some success when mining for this alpha. 
 
 This strategy is constructed using a long short portfolio, and keeping an active long position on fallen angels. I've allowed the flexibility to add in and decrease other fixed income betas by choice of the short leg, whether it be Treasuries to capture the most premia or high yield debt to capture purely the fallen angels. I've personally opted for a GDP-based markov regime switching strategy to pick risk-on and risk-off scenarios to pick up more fixed income risk premia. 
 
