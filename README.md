@@ -13,7 +13,7 @@ The original LOIM articles can be found here
 
 The thesis behind the strategy comes from the following
 1. Although Catching knives is a common colloquim within markets, where you should not buy a security as it decreases in value since there is a risk it will continue to decrease. I believe that the opportunity exists since fixed income securities inherently have less risk than their equity counterparts. That is because fixed income investors have claims to company's assets (assuminng no unsecured financing) and claims to cashflows before equity investors.
-2. Selloffs are likely to occur from mandated investors. Since fixed income securities provide a steady stream of incomes a variety of LDI (liability-driven investors) such as pensions, insurance, and wealth funds hold them to do their ALM (asset-liability management). Many of these investors have investment-grade mandates and thus are forced to sell fixed income securities that get downgraded.
+2. Selloffs are likely to occur from mandated investors. Since fixed income securities provide a steady stream of income to a variety of LDI (liability-driven investors) such as pensions, insurance, and wealth funds hold them to do their ALM (asset-liability management). Many of these investors have investment-grade mandates and thus are forced to sell fixed income securities that get downgraded.
 3. Credit rating changes in my opinion are lagging indicators. Although credit ratings are meant to analyze future cash flows, a prompts in ratings change will be "observed". It is likely that there is signficant time between when a credit rating change is proposed and when it is implemented, and thus the market price has likely alread priced that in.
 
 ## Codebase & Methodology
