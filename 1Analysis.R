@@ -16,11 +16,6 @@ df_prep <- df_raw %>%
   rename("quote" = "variable_0", "ticker" = "variable_1", "price" = "value") %>% 
   mutate(Date = as.Date(Date))
 
-df_prep <- df_raw %>% 
-  tibble() %>% 
-  rename("quote" = "variable_0", "ticker" = "variable_1", "price" = "value") %>% 
-  mutate(Date = as.Date(Date))
-
 # we are going to use BND as our benchmark index for calculating betas
 df_benchmark <- df_prep %>% 
   filter(quote == "Adj Close", ticker == "BND")
