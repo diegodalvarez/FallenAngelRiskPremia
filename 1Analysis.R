@@ -1,6 +1,7 @@
 require("zoo")
 require("roll")
 require("MSwM")
+require("arrow")
 require("ggplot2")
 require("tidyverse")
 require("lubridate")
@@ -8,32 +9,29 @@ require("lubridate")
 # path management
 parent_dir <- normalizePath("..")
 data_dir <- paste0(parent_dir, "\\data")
-file_path <- paste0(data_dir, "\\fallen_angels.csv")
-df_raw <- read.csv(file_path)
+file_path <- paste0(data_dir, "\\fallen_angels.parquet")
 
-df_prep <- df_raw %>% 
-  tibble() %>% 
-  rename("quote" = "variable_0", "ticker" = "variable_1", "price" = "value") %>% 
-  mutate(Date = as.Date(Date))
+df_raw <- read_parquet(file_path)
 
 # we are going to use BND as our benchmark index for calculating betas
-df_benchmark <- df_prep %>% 
-  filter(quote == "Adj Close", ticker == "BND")
+df_benchmark <- df_raw %>% 
+  filter(quote == "adjusted", ticker == "BND")
 
-df_securities <- df_prep %>% 
+df_securities <- df_raw %>% 
   filter(ticker != "BND")
 
 # want to check and see if they pay dividends
 close_rtn <- df_securities %>%
-  filter(quote == "Close") %>%
+  filter(quote == "close") %>%
   group_by(ticker) %>%
   mutate(close_rtn = price / lag(price) - 1) %>%
   select(Date, ticker, close_rtn) %>%
   ungroup()
 
-adj_close_rtn <- df_prep %>%
-  filter(quote == "Adj Close") %>%
+adj_close_rtn <- df_raw %>%
+  filter(quote == "adjusted") %>%
   group_by(ticker) %>%
+  arrange(Date) %>% 
   mutate(adj_close_rtn = price / lag(price) - 1) %>%
   select(Date, ticker, adj_close_rtn) %>%
   ungroup()
@@ -56,8 +54,8 @@ dividend_plot <- ggplot(df_dividend_plot, aes(x = Date, y = diff, color = ticker
 dividend_plot
 
 df_rtn <- df_securities %>%
-  filter(quote == "Adj Close") %>%
-  select(-quote, -X) %>%
+  filter(quote == "adjusted") %>%
+  select(-quote) %>%
   pivot_wider(names_from = "ticker", values_from = "price") %>%
   drop_na() %>% 
   pivot_longer(!Date, names_to = "ticker", values_to = "price") %>% 
@@ -69,9 +67,14 @@ df_rtn <- df_securities %>%
 df_plot <- df_rtn %>%
   select(Date, ticker, cum_rtn) 
 
+min_date <- min(df_plot$Date)
+max_date <- max(df_plot$Date)
+
 return_plot <- ggplot(df_plot, aes(x = Date, y = cum_rtn, color = ticker)) +
   geom_line() +
-  labs(y = "Cumulative Return (%)", title = "Maybe You can catch the Falling Knives") 
+  labs(
+    y = "Cumulative Return (%)", 
+    title = paste("Maybe You can catch the Falling Knives from", min_date, "to", max_date)) 
 
 return_plot
 
@@ -132,7 +135,6 @@ yoy_spread_plot <- ggplot(df_spread_yoy, aes(x = Date, y = cum_rtn, color = tick
 
 yoy_spread_plot
 
-
 first_date <- df_spread_rtn$Date %>% min()
 benchmark_rtn <- df_benchmark %>% 
   filter(Date >= first_date) %>% 
@@ -145,12 +147,17 @@ df_rtn_combined <- df_rtn %>%
     rtn = rtn * 100,
     benchmark_rtn = benchmark_rtn * 100)
 
+min_date <- min(df_rtn_combined$Date)
+max_date <- max(df_rtn_combined$Date)
+
 ggplot(df_rtn_combined, aes(x = benchmark_rtn, y = rtn)) +
   geom_point() +
   geom_smooth(method = "lm") +
   facet_wrap(~ticker, scale = "free") +
-  labs(x = "Benchmark Return % (BND)", y = "Security Return %", 
-       title = "Individual Securities CAPM")
+  labs(
+    x = "Benchmark Return % (BND)", 
+    y = "Security Return %", 
+    title = paste("Individual Securities Regression from", min_date, "to", max_date))
 
 benchmark_val <- benchmark_rtn$benchmark_rtn
 agg_rtns <- (df_rtn_combined %>% filter(ticker == "AGG"))$rtn
@@ -184,7 +191,6 @@ df_spread_rtn %>%
   ggplot(aes(x = Date, y = cum_rtn, color = ticker)) +
   geom_line() +
   facet_wrap(~year, scales = "free") 
-
 
 df_spread_combined <- df_spread_rtn %>% 
   left_join(benchmark_rtn, by = "Date") %>% 
@@ -254,7 +260,6 @@ df_quarter <- tibble(
       quarter(ymd(Date)) == 4 ~ "Q4"),
     year_quarter = paste(format(Date, format = "%Y"), quarter)) %>% 
   select(Date, year_quarter)
-
 
 df_regime_quarter <- df_regime %>% 
   mutate(
@@ -331,7 +336,7 @@ df_spread_rtn %>%
       select(Date, rtn) %>% 
       mutate(ticker = "strat") %>% 
       pivot_wider(names_from = ticker, values_from = rtn),
-    how = "Date") %>% 
+    by = "Date") %>% 
   pivot_longer(!Date) %>% 
   mutate(year = format(Date, format = "%Y")) %>% 
   group_by(name, year) %>% 
@@ -378,3 +383,4 @@ regress_coefs %>%
   geom_histogram(bins = 100) +
   facet_grid(~name, scale = "free") +
   labs(title = "1y Rolling Alpha & Beta of Strat Distribution")
+
