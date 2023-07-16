@@ -8,6 +8,9 @@ data_dir <- paste0(parent_dir, "\\data")
 file_path <- paste0(data_dir, "\\fallen_angels.parquet")
 df_raw <- read.csv(file_path)
 
+if (!file.exists(data_dir)){dir.create(data_dir)}
+if (!file.exists(parent_dir)){dir.create(file_path)}
+
 tickers <- c("AGG", "ANGL", "BND", "HYG", "TLT")
 start_date <- as.Date("2008-01-01")
 
