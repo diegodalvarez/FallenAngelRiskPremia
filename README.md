@@ -20,3 +20,26 @@ The thesis behind the strategy comes from the following
 The majority of this codebase is written in R. There are a couple of small caveats that come Python since my bacground is in python programming. I've wokred on similar long short projects primarily in python [LSPair](https://github.com/diegodalvarez/LSPair) and LSPort (yet to be public). As I progress with this project I'll continue to shift the codebase closer to R since it is originally what I started with. 
 
 When creating this model I first started with fixed income ETFs and 50/50 long short weights. As I progress I'll incorporate beta hedging to be market neutral and more fundamental bottom-up techniques. Unlike Lombard Odier Investment Management, I plan to make the whole model systematic. I belive that with fundamental factors blended I will be able to accurately parse out better candidate securities and build a robust model. I may continue to work more on the markov regime switching model to allow for fixed income premias, but since the overall goal is of projects is to detect alphas I'm not sure if I'll continue down that path.
+
+## Repo layout
+```bash
+    FallenAngelRiskPremia
+      └───src
+          │   YFCollectData.R
+          │   rollingOLSParams.R
+      └───background
+          │   edaOLS.R
+          │   OLSAnalysis.R
+      └───strats
+          │   fiftyfifty.R
+          |   betaNeutral.R
+          |   MarkovRegime.R
+      └───data
+          │   etf.parquet
+          │   rollingOLSparams.parquet
+          │   etf.parquet
+```
+
+src files:
+* ```YFCollectData.R```: Collects data from yahoo finance using specifically ETFs and saves etf.parquet
+* ```rollingOLSParams.R```: Does Rolling OLS regression and saves parameters rollingOLSParams.parquet
