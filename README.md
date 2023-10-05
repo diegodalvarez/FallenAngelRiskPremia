@@ -29,10 +29,10 @@ When creating this model I first started with fixed income ETFs and 50/50 long s
           │   rollingOLSParams.R
       └───background
           │   edaOLS.R
-          │   OLSAnalysis.R
+          │   AlphaAnalysis.R
       └───strats
           │   fiftyfifty.R
-          |   betaNeutral.R
+          │   betaNeutral.R
           |   MarkovRegime.R
       └───data
           │   etf.parquet
