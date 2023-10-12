@@ -1,5 +1,6 @@
 require("roll")
 require("arrow")
+require("moments")
 require("ggplot2")
 require("tidyverse")
 
@@ -44,7 +45,7 @@ df_combined %>%
   mutate(cum_rtn = cum_rtn * 100) %>% 
   ggplot(aes(x = Date, y = cum_rtn, color = ticker)) +
   geom_line() +
-  ylab("Cumulative Return (%)") %>% 
+  ylab("Cumulative Return (%)") +
   labs(title = paste("Playback of returns 50-50 split using all possible data from", start_date, "to", end_date))
 
 #let's cut it all in one piece just to compare
@@ -93,8 +94,10 @@ df_rr %>%
 
 df_combined %>% 
   ggplot(aes(x = port_rtn)) +
-  facet_wrap(~ticker) +
-  geom_histogram(bins = 30)
+  facet_wrap(~ticker, scale = "free") +
+  geom_histogram(bins = 30) +
+  xlab("Daily Return (%)") +
+  labs(title = paste("Daily Strategy Returns distribution from", start_date, "to", end_date))
 
 df_rtn_moment <- df_combined %>% 
   select(ticker, port_rtn) %>% 
@@ -133,3 +136,4 @@ df_rr_moments %>%
   facet_wrap(~name, scale = "free") +
   geom_bar(stat = "identity") +
   labs(title = paste("First 4 Moments of returns distribution from", start_date, "to", end_date))
+
