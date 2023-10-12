@@ -43,3 +43,9 @@ When creating this model I first started with fixed income ETFs and 50/50 long s
 src files:
 * ```YFCollectData.R```: Collects data from yahoo finance using specifically ETFs and saves etf.parquet
 * ```rollingOLSParams.R```: Does Rolling OLS regression and saves parameters rollingOLSParams.parquet
+
+# Todo
+1. Create beta hedging algorithm
+2. Backtest with instantaneous hedging
+3. backtest with delayed hedging
+4. backtest with position sizing
