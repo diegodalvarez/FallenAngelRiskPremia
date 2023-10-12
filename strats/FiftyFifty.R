@@ -67,6 +67,14 @@ df_cut %>%
   ylab("Cumulative Returns (%)") +
   labs(title = paste("Playback of returns 50-50 split same start date from", start_date, "to", end_date))
 
+df_cut %>% 
+  filter(Date == max(Date)) %>% 
+  mutate(cum_rtn = cum_rtn * 100) %>% 
+  ggplot(aes(x = ticker, y = cum_rtn)) +
+  geom_bar(stat = "identity") +
+  ylab("Cumulative Return (%)") +
+  labs(title = paste("Cumulative Return of each strategy using same start date from", start_date, "to", end_date))
+
 df_rr <- df_combined %>% 
   select(Date, ticker, port_rtn) %>% 
   group_by(ticker) %>% 
