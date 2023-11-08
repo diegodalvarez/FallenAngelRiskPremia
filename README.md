@@ -33,16 +33,33 @@ When creating this model I first started with fixed income ETFs and 50/50 long s
       └───strats
           │   fiftyfifty.R
           │   betaNeutral.R
-          |   MarkovRegime.R
+          │   MarkovRegime.R
+          │   PositionSizingBetaHedge.R
+          │   PositionSizingBetaHedgeGraphs.R
       └───data
           │   etf.parquet
           │   rollingOLSparams.parquet
           │   etf.parquet
 ```
+data files:
+* ```etf.parquet```: All of the ETF data
+* ```rollingOLSparams.parquet```: OLS Rolling Parameters Data
+* ```BetaNeutralWeighting.parquet```: Beta Neutral Weighting Scheme
+* ```backtest.parquet```: Holding backtest information for position level information accounting for share price and cash
+
+background files:
+* ```edaOLS.R```: Rolling OLS analysis 
+* ```AlphaAnalysis.R```: Background on rolling alphas of the from the OLS
 
 src files:
 * ```YFCollectData.R```: Collects data from yahoo finance using specifically ETFs and saves etf.parquet
 * ```rollingOLSParams.R```: Does Rolling OLS regression and saves parameters rollingOLSParams.parquet
+
+strats files:
+* ```fiftyfifty.R```: L/S with 50/50 Spread
+* ```betaNeutral.R```: L/S Beta Neutral Weigthing applied back to the signal
+* ```PositionSizingBetaHedge.R```: L/S Beta Neutral Weighting but accounting for share price and allocation
+* ```PositionSizingBetaHedgeGraphs.R```: Graphs for L/S Beta Neutral Weighting accounting for share price
 
 # Todo
 1. Create beta hedging algorithm
