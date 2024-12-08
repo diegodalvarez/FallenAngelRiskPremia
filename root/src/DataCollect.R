@@ -34,8 +34,17 @@ DataCollect <- R6Class(
       self$note_path     <- file.path(self$root_path, "notebooks")
       self$data_path     <- file.path(self$repo_path, "data")
       self$raw_path      <- file.path(self$data_path, "RawData")
+      
+      
       self$bbg_px_path   <- "/Users/diegoalvarez/Desktop/BBGData/data"
-      self$bbg_bond_path <- "/Users/diegoalvarez/Desktop/BBGData/ETFIndices/BondPricing"
+      if (file.exists(self$bbg_px_path) == FALSE){
+        self$bbg_px_path  <- "C:\\Users\\Diego\\Desktop\\app_prod\\BBGData\\data"
+        }
+      
+      self$bbg_bond_path  <- "/Users/diegoalvarez/Desktop/BBGData/ETFIndices/BondPricing"
+      if (file.exists(self$bbg_bond_path) == FALSE){
+        self$bbg_bond_path <- "C:\\Users\\Diego\\Desktop\\app_prod\\BBGData\\ETFIndices\\BondPricing"
+        }
       
       if (!dir.exists(self$note_path)){dir.create(self$note_path, recursive = TRUE)}
       if (!dir.exists(self$data_path)){dir.create(self$data_path, recursive = TRUE)}
@@ -116,4 +125,3 @@ DataCollect <- R6Class(
   ))
 
 df = DataCollect$new()$get_data(verbose = TRUE)
-
