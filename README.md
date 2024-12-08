@@ -62,7 +62,6 @@ strats files:
 * ```PositionSizingBetaHedgeGraphs.R```: Graphs for L/S Beta Neutral Weighting accounting for share price
 
 # Todo
-1. Create beta hedging algorithm
-2. Backtest with instantaneous hedging
-3. backtest with delayed hedging
-4. backtest with position sizing
+1. Finalize beta neutral calculation
+2. OOP functions
+3. create backtest research
