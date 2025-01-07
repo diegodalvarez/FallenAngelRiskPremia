@@ -5,6 +5,13 @@ suppressWarnings(require("arrow"))
 suppressWarnings(require("ggplot2"))
 suppressWarnings(require("tidyverse"))
 
+data_path   <- "C:\\Users\\Diego\\Desktop\\app_prod\\research\\FallenAngel\\data"
+weight_path <- file.path(data_path, "Weights") 
+
+if (!file.exists(weight_path)){
+  file_created <- dir.create(weight_path)
+}
+
 get_data <- function(){
   
   file_path <- (file.path(
@@ -27,9 +34,7 @@ get_data <- function(){
 }
 df_prices <- get_data()
 
-
 get_duration_hedge <- function(df_prices, width = 30){
-  
   
   df_duration <- df_prices %>% 
     select(date, security, mod_dur, sec_group) %>% 
@@ -53,15 +58,12 @@ get_duration_hedge <- function(df_prices, width = 30){
   df_out <- df_angel %>% 
     inner_join(df_hy, by = c("date"), relationship = "many-to-many") %>% 
     mutate(
-      tmp1         = angel_dur / (angel_dur + hy_dur),
-      angel_weight = angel_dur * tmp1 / hy_dur,
-      hy_weight    = 1 - angel_weight) %>% 
-    group_by(angel_sec, hy_sec) %>% 
-    mutate(
-      lag_angel_weight = lag(angel_weight),
-      lag_hy_weight    = lag(hy_weight)) %>% 
+      angel_inv    = 1 / angel_dur,
+      hy_inv       = 1 / hy_dur,
+      angel_weight = lag(angel_inv / (angel_inv + hy_inv)),
+      hy_weight    = lag(hy_inv / (angel_inv + hy_inv))) %>% 
     drop_na() %>% 
-    ungroup()
+    select(-c(angel_inv, hy_inv))
   
   return(df_out)
 }
@@ -69,14 +71,15 @@ df_duration_neutral <- get_duration_hedge(df_prices)
 
 get_vol_hedge <- function(df_prices, window = 30){
   
+  df_duration_neutral <- get_duration_hedge(df_prices)
+  
   df_vol <- df_prices %>% 
     select(security, date, PX_rtn, sec_group) %>% 
     group_by(security) %>% 
     arrange(date) %>% 
     mutate(
-      vol     = runSD(PX_rtn, n  = window) * sqrt(252),
-      lag_vol = lag(vol),
-      inv_vol = 1 / lag_vol) %>% 
+      vol     = roll_sd(PX_rtn, width = 30),
+      inv_vol = lag(1 / vol)) %>% 
     drop_na() %>% 
     ungroup()
   
@@ -91,39 +94,17 @@ get_vol_hedge <- function(df_prices, window = 30){
   df_out <- df_hy %>% 
     inner_join(df_angel, by = c("date"), relationship = "many-to-many") %>% 
     mutate(
-      cum_vol      = hy_vol + angel_vol,
-      angel_weight = angel_vol / cum_vol,
-      hy_weight    = hy_vol / cum_vol)
+      hy_weight    = lag(hy_vol / (hy_vol + angel_vol)),
+      angel_weight = lag(angel_vol / (hy_vol + angel_vol))) %>% 
+    select(-c(hy_vol, angel_vol)) %>% 
+    drop_na()
   
   return(df_out)
 }
 df_vol_neutral <- get_vol_hedge(df_prices)
 
-window <- 30
-df_hy <- df_prices %>% 
-  filter(sec_group == "HY") %>% 
-  select("hy_sec" = security, "hy_rtn" = PX_rtn, date) %>% 
-  drop_na()
+df_duration_neutral %>% 
+  write_parquet(file.path(weight_path, "DurationNeutral.parquet"))
 
-df_angel <- df_prices %>% 
-  filter(sec_group == "Angel") %>% 
-  select("angel_sec" = security, "angel_rtn" = PX_rtn, date) %>% 
-  drop_na()
-
-df_hy %>% 
-  inner_join(df_angel, by = c("date"), relationship = "many-to-many") %>% 
-  group_by(hy_sec, angel_sec) %>% 
-  arrange(date) %>% 
-  mutate(
-    roll_cov     = runCov(hy_rtn, angel_rtn, n = window),
-    roll_var     = runVar(hy_rtn, n = window),
-    roll_beta    = roll_cov / roll_var,
-    lag_beta     = lag(roll_beta),
-    tmp1         = lag_beta / (1 + lag_beta),
-    angel_weight = roll_beta * tmp1 / 1,
-    hy_weight    = 1 - angel_weight,
-    angl_test    = angel_rtn * angel_weight,
-    hy_test      = hy_rtn * hy_weight) %>% 
-  drop_na() %>% 
-  select(-c(roll_cov, roll_var))
-  
+df_vol_neutral %>% 
+  write_parquet(file.path(weight_path, "VolNeutral.parquet"))
