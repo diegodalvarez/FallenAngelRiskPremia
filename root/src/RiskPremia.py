@@ -180,4 +180,4 @@ def main() -> None:
     RiskPremia().calculate_duration_neutral_spread(verbose = True)
     RiskPremia().get_yld_spread(verbose = True)
     
-#if __name__ == "__main__": main()
+if __name__ == "__main__": main()
