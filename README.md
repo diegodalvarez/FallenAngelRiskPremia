@@ -1,65 +1,29 @@
-# Not Intended as Investment Advice
-# Fallen Angel Risk Premia
+# Sytematically Fallen Angel Risk Premia
 
 ## Introduction 
-This is a sample portfolio strategy that looks at incorporating fallen angels within a market neutral long short portfolio. The inspiration from this work came from a series of articles that were posted Lombard Odier Investment Management's team regarding adding fallen angel bond exposure. Since I personally believe that alpha streams stemming contrarian positions can provide superior returns, due to their dislcoation I've found some success when mining for this alpha. 
+Long-Short trading strategy for fallen angels. This model trades the spread between high yield. The in-sample sharpe is around 2 while the out-of-sample sharpe is round 1.3. The results are built using ETFs rather than the underlying bonds. The data was collected from Bloomberg Terminal, and the calculations can be found in this GitHub repo. The technical writeup that goes into the results can be found below. 
 
-This strategy is constructed using a long short portfolio, and keeping an active long position on fallen angels. I've allowed the flexibility to add in and decrease other fixed income betas by choice of the short leg, whether it be Treasuries to capture the most premia or high yield debt to capture purely the fallen angels. I've personally opted for a GDP-based markov regime switching strategy to pick risk-on and risk-off scenarios to pick up more fixed income risk premia. 
+## Brief Overview
+Fallen Angels outperform their respective bond benchmarks.
+![image](https://github.com/user-attachments/assets/cefe56cd-db2f-468e-bfff-4c7895298f23)
 
-The original LOIM articles can be found here
-1. [Why are fallen angels the pick of high yield?](https://am.lombardodier.com/gb/en/contents/news/investment-viewpoints/2023/may/1882-NA-PROD-NA-high-yield.html)
-2. [Actively exploiting potential in fallen angels](https://am.lombardodier.com/contents/news/investment-viewpoints/2023/may/1882-NA-PROD-NA-exploiting-pot.html)
-3. [Fallen angels: beyond the downgrade](https://am.lombardodier.com/contents/news/investment-viewpoints/2023/april/1882-NA-PROD-NA-beyond-downgrade.html)
+Taking the returns differential shows the compensation for buying fallen angels while being short a respective ETF. 
+![image](https://github.com/user-attachments/assets/78ba0d3b-45d1-47ca-8573-2693b06d35ba)
 
-The thesis behind the strategy comes from the following
-1. Although Catching knives is a common colloquim within markets, where you should not buy a security as it decreases in value since there is a risk it will continue to decrease. I believe that the opportunity exists since fixed income securities inherently have less risk than their equity counterparts. That is because fixed income investors have claims to company's assets (assuminng no unsecured financing) and claims to cashflows before equity investors.
-2. Selloffs are likely to occur from mandated investors. Since fixed income securities provide a steady stream of income to a variety of LDI (liability-driven investors) such as pensions, insurance, and wealth funds hold them to do their ALM (asset-liability management). Many of these investors have investment-grade mandates and thus are forced to sell fixed income securities that get downgraded.
-3. Credit rating changes in my opinion are lagging indicators. Although credit ratings are meant to analyze future cash flows, a prompt in ratings change will be "observed". It is likely that there is signficant time between when a credit rating change is proposed and when it is implemented, and thus the market price has likely alread priced that in.
+The main portfolio of interest is long fallen angels and short high yield. This because fallen angels have high-yield like returns while having better credit quality (by definition) and investment grade bond attributes (usually non-callable and longer maturities). Below are the dollar neutral and duration neutral returns of the portfolio.
+![image](https://github.com/user-attachments/assets/00fdf6fe-12f5-4649-9863-8a3cad847e4c)
+![image](https://github.com/user-attachments/assets/51eaa624-a9a3-470f-957e-6d8444812461)
 
-## Codebase & Methodology
-The majority of this codebase is written in R. There are a couple of small caveats that come Python since my bacground is in python programming. I've wokred on similar long short projects primarily in python [LSPair](https://github.com/diegodalvarez/LSPair) and LSPort (yet to be public). As I progress with this project I'll continue to shift the codebase closer to R since it is originally what I started with. 
+Equal weight returns across each pair. 
+![image](https://github.com/user-attachments/assets/5e691fa2-a335-44fd-b3c2-851ee06d8211)
+![image](https://github.com/user-attachments/assets/f0cb71f0-54a1-49e8-b700-08b571f787d6)
 
-When creating this model I first started with fixed income ETFs and 50/50 long short weights. As I progress I'll incorporate beta hedging to be market neutral and more fundamental bottom-up techniques. Unlike Lombard Odier Investment Management, I plan to make the whole model systematic.
 
-## Repo layout
-```bash
-    FallenAngelRiskPremia
-      └───src
-          │   YFCollectData.R
-          │   rollingOLSParams.R
-      └───background
-          │   edaOLS.R
-          │   AlphaAnalysis.R
-      └───strats
-          │   fiftyfifty.R
-          │   betaNeutral.R
-          │   MarkovRegime.R
-          │   PositionSizingBetaHedge.R
-          │   PositionSizingBetaHedgeGraphs.R
-      └───data
-          │   etf.parquet
-          │   rollingOLSparams.parquet
-          │   etf.parquet
-```
-data files:
-* ```etf.parquet```: All of the ETF data
-* ```rollingOLSparams.parquet```: OLS Rolling Parameters Data
-* ```BetaNeutralWeighting.parquet```: Beta Neutral Weighting Scheme
-* ```backtest.parquet```: Holding backtest information for position level information accounting for share price and cash
 
-background files:
-* ```edaOLS.R```: Rolling OLS analysis 
-* ```AlphaAnalysis.R```: Background on rolling alphas of the from the OLS
-
-src files:
-* ```YFCollectData.R```: Collects data from yahoo finance using specifically ETFs and saves etf.parquet
-* ```rollingOLSParams.R```: Does Rolling OLS regression and saves parameters rollingOLSParams.parquet
-
-strats files:
-* ```fiftyfifty.R```: L/S with 50/50 Spread
-* ```betaNeutral.R```: L/S Beta Neutral Weigthing applied back to the signal
-* ```PositionSizingBetaHedge.R```: L/S Beta Neutral Weighting but accounting for share price and allocation
-* ```PositionSizingBetaHedgeGraphs.R```: Graphs for L/S Beta Neutral Weighting accounting for share price
+|         | PDF          |
+|----------------|---------------------|
+| Technical Writeup containing methodology & results | <a href="https://github.com/diegodalvarez/FallenAngelRiskPremia/blob/main/FallenAngelWriteup.pdf">![image](https://github.com/user-attachments/assets/abe487db-026c-4455-b8d8-746108d637e7)
+</a> |
 
 # Todo
 1. Transaction Cost & Slippage
