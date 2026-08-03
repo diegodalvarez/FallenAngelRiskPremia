@@ -135,7 +135,7 @@ class DataPrep:
         out_path = os.path.join(self.prep_path, "Rtn.parquet")
         
         if os.path.exists(out_path) == True:
-            if verbose: print("Saving data\n")
+            if verbose: print("Already Have Data\n")
             return None
         
         df_out = (pd.concat([
