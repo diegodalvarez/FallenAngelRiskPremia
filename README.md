@@ -1,24 +1,5 @@
 # Sytematically Fallen Angel Risk Premia
-
-## Introduction 
-Long-Short trading strategy for fallen angels. This model trades the spread between high yield. The in-sample sharpe is around 2 while the out-of-sample sharpe is round 1.3. The results are built using ETFs rather than the underlying bonds. The data was collected from Bloomberg Terminal, and the calculations can be found in this GitHub repo. The technical writeup that goes into the results can be found below. 
-
-## Brief Overview
-Fallen Angels outperform their respective bond benchmarks.
-![image](https://github.com/user-attachments/assets/cefe56cd-db2f-468e-bfff-4c7895298f23)
-
-Taking the returns differential shows the compensation for buying fallen angels while being short a respective ETF. 
-![image](https://github.com/user-attachments/assets/78ba0d3b-45d1-47ca-8573-2693b06d35ba)
-
-The main portfolio of interest is long fallen angels and short high yield. This because fallen angels have high-yield like returns while having better credit quality (by definition) and investment grade bond attributes (usually non-callable and longer maturities). Below are the dollar neutral and duration neutral returns of the portfolio.
-![image](https://github.com/user-attachments/assets/00fdf6fe-12f5-4649-9863-8a3cad847e4c)
-![image](https://github.com/user-attachments/assets/51eaa624-a9a3-470f-957e-6d8444812461)
-
-Equal weight returns across each pair. 
-![image](https://github.com/user-attachments/assets/5e691fa2-a335-44fd-b3c2-851ee06d8211)
-![image](https://github.com/user-attachments/assets/f0cb71f0-54a1-49e8-b700-08b571f787d6)
-
-
+This repo aims to analyze fallen angels as well as examine the fallen angel premia. Fallen angels have a tendency to 
 
 |         | PDF          |
 |----------------|---------------------|
