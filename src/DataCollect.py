@@ -242,9 +242,9 @@ def main() -> None:
            
     data_collect = DataCollect()
     data_collect.get_raw_px()
-    #data_collect.get_clean_bond_fundamentals()
-    #data_collect.get_extra_bond_fundamental()
-    #data_collect.get_etf_info()
-    #data_collect.get_index_total_return()
+    data_collect.get_clean_bond_fundamentals()
+    data_collect.get_extra_bond_fundamental()
+    data_collect.get_etf_info()
+    data_collect.get_index_total_return()
     
 if __name__ == "__main__": main()

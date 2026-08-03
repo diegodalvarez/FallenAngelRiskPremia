@@ -1,4 +1,7 @@
 # Sytematically Fallen Angel Risk Premia
+
+The original version of this repo can be found on a prior branch called ```v1```. For consistency and clarity the ```v1``` repo was reported in this writeup from Robot Wealth [here](https://robotwealth.com/the-hidden-gems-of-high-yield-bonds-fallen-angels/)
+
 This repo aims to analyze fallen angels as well as examine the fallen angel premia. Fallen angels have a tendency to 
 
 |         | PDF          |
