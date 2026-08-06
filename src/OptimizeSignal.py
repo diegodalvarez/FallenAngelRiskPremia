@@ -215,31 +215,84 @@ class SignalOptimizer:
         if verbose: print("\n")
         return df_out
     
+    def _get_combined_signal_rtn(self) -> pd.DataFrame: 
+        
+        rtn_path = os.path.join(self.sig_path, "MeanReversionRtn.parquet")
+        yld_path = os.path.join(self.sig_path, "YieldReversion.parquet")
+        
+        df_rtn_mr = (pd
+            .read_parquet(path = rtn_path, engine = "pyarrow")
+            .drop(columns = ["asset"]))
+        
+        df_yld_mr = (pd
+            .read_parquet(path = yld_path, engine = "pyarrow"))
+        
+        df_rtn_tmp = (df_rtn_mr
+            .assign(signal_name = lambda x: x.name)
+            [["date", "signal_name", "signal"]])
+        
+        df_yld_tmp = (df_yld_mr
+            .assign(signal_name = lambda x: "ANGL " + x.security + " " + x.variable)
+            [["date", "signal", "signal_name"]])
+        
+        df_rtn_keep = (df_rtn_mr
+            .assign(signal_name = lambda x: x.fa_ticker + " " + x.fi_ticker + " rtn")
+            .loc[lambda x: x.hedge == "perfect"]
+            [["date", "signal_name", "signal"]])
+        
+        df_signal_raw = (pd
+            .concat([df_rtn_keep, df_yld_tmp]))
+        
+        df_signal = (df_signal_raw
+            [["signal_name"]]
+            .drop_duplicates()
+            .assign(
+                str_split    = lambda x: x.signal_name.str.split(" "),
+                spread_name  = lambda x: x.str_split.str[0] + " " + x.str_split.str[1],
+                signal_group = lambda x: x.str_split.str[2])
+            .drop(columns = ["str_split"])
+            .merge(right = df_signal_raw, how = "inner", on = ["signal_name"]))
+        
+        return df_signal
+    
     def optimize_signal(self, verbose: bool = True) -> None: 
         
-        signals = os.listdir(self.sig_path)
-        for signal in signals:
-            
-            tmp_out_path = os.path.join(self.opt_path, signal)
-            tmp_in_path  = os.path.join(self.sig_path, signal)
-            
-            if os.path.exists(tmp_out_path):
-                if verbose: print("Already have {}\n".format(signal.split(".")[0]))
-                continue
-            
-            df_signal = (pd
-                    .read_parquet(path = tmp_in_path, engine = "pyarrow")
-                    .assign(date = lambda x: pd.to_datetime(x.date))
-                    .set_index("date")
-                    .groupby("name")
-                    .apply(self._optimize_signal, self.q)
-                    .reset_index()
-                    .drop(columns = ["level_1"])
-                    .assign(signal = signal.split(".")[0]))
-            
-            if verbose: print("Saving {}".format(signal.split(".")[0]))
-            df_signal.to_parquet(path = tmp_out_path, engine = "pyarrow")
+        if verbose: print("Getting Optimized Mean Reversion Signal")
+        
+        files    = ["MeanReversionRtn.parquet", "YieldReversion.parquet"]
+        out_path = os.path.join(self.opt_path, "MeanReversionOptSignal.parquet")
+        
+        if os.path.exists(out_path):
+            if verbose: print("Already have data\n")
+            return None
+        
+        rtn_path = os.path.join(self.data_path, "PrepData", "Rtn.parquet")
+        
+        df_rtn = (pd
+            .read_parquet(path = rtn_path, engine = "pyarrow")
+            .loc[lambda x: (x.asset == "etf") & (x.hedge == "perfect") & (x.fi_ticker != "SJNK")]
+            .assign(
+                spread_rtn  = lambda x: x.fa_rtn - x.fi_rtn,
+                spread_name = lambda x: x.fa_ticker + " " + x.fi_ticker)
+            [["date", "hedge", "spread_rtn", "spread_name"]])
+        
+        df_signal = self._get_combined_signal_rtn()
+        
+        df_combined = (df_signal
+            .merge(right = df_rtn, how = "inner", on = ["date", "spread_name"])
+            .dropna()
+            .set_index("date")
+            .groupby("signal_name")
+            .apply(self._optimize_signal)
+            .reset_index()
+            .drop(columns = ["level_1"]))
     
+        if verbose: print("Saving data\n")
+        df_combined.to_parquet(path = out_path, engine = "pyarrow")
     
-signal_optimizer = SignalOptimizer()
-signal_optimizer.optimize_signal()
+def main() -> None: 
+    
+    signal_optimizer = SignalOptimizer()
+    signal_optimizer.optimize_signal()
+    
+if __name__ == "__main__": main()

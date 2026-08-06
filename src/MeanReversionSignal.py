@@ -20,14 +20,14 @@ class MeanReversion:
         
         if os.path.exists(self.sig_path) == False: os.makedirs(self.sig_path)
         
-    def _rtn_mr(self, df: pd.DataFrame, window: int) -> pd.DataFrame: 
+    def _mean_reversion(self, df: pd.DataFrame, var_name: str, window: int) -> pd.DataFrame: 
         
         df_out = (df.sort_values(
             "date").
             assign(
                 signal = lambda x: (
-                    x.spread_rtn - x.spread_rtn.ewm(span = window, adjust = False).mean()) / 
-                    x.spread_rtn.ewm(span = window, adjust = False).std(),
+                    x[var_name]- x[var_name].ewm(span = window, adjust = False).mean()) / 
+                    x[var_name].ewm(span = window, adjust = False).std(),
                 lag_signal = lambda x: x.signal.shift()))
         
         return df_out
@@ -50,12 +50,37 @@ class MeanReversion:
                 spread_rtn = lambda x: 0.5 * (x.fa_rtn - x.fi_rtn),
                 name       = lambda x: x.fi_ticker + " " + x.fa_ticker + " " + x.hedge).
             groupby("name").
-            apply(self._rtn_mr, window).
+            apply(self._mean_reversion, "spread_rtn", window).
             reset_index().
             drop(columns = ["level_1"]))
         
         if verbose: print("Saving data\n")
         df_out.to_parquet(path = out_path, engine = "pyarrow")
         
-mean_reversion = MeanReversion()
-mean_reversion.get_rtn_mean_reversion()
+    def get_yld_mean_reversion(self, window: int = 30, verbose: bool = True) -> pd.DataFrame: 
+        
+        if verbose: print("Getting Yield Mean Reversion Signal")
+        yld_path = os.path.join(self.data_path, "PrepData", "YldSprd.parquet")
+        out_path = os.path.join(self.sig_path, "YieldReversion.parquet")
+        
+        if os.path.exists(out_path):
+            if verbose: print("Saving data\n")
+            return None
+        
+        df_out = (pd
+                .read_parquet(path = yld_path, engine = "pyarrow")
+                .assign(name = lambda x: x.security + "-" + x.variable)
+                .groupby("name")
+                .apply(self._mean_reversion, "spread", window)
+                .reset_index(drop = True))
+        
+        if verbose: print("Saving data\n")
+        df_out.to_parquet(path = out_path, engine = "pyarrow")
+
+def main() -> None: 
+        
+    mean_reversion = MeanReversion()
+    mean_reversion.get_rtn_mean_reversion()
+    mean_reversion.get_yld_mean_reversion()
+    
+if __name__ == "__main__": main()

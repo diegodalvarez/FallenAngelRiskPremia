@@ -8,6 +8,11 @@ Created on Tue Jul 21 23:59:36 2026
 import os
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
+from   statsmodels.regression.rolling import RollingOLS
+
+from tqdm import tqdm
+tqdm.pandas()
 
 class DataPrep:
     
@@ -145,9 +150,118 @@ class DataPrep:
         if verbose: print("Saving data\n")
         df_out.to_parquet(path = out_path)
         
+    def _get_rolling_alpha(self, df: pd.DataFrame, window: int = 30) -> pd.DataFrame: 
+    
+        df_out = (RollingOLS(
+            endog  = df.fa_rtn,
+            exog   = sm.add_constant(df.fi_rtn),
+            window = window)
+            .fit()
+            .params
+            .assign(window = window)
+            .merge(right = df, how = "inner", on = ["date"]))
+        
+        return df_out
+        
+    def get_alpha(self, window: int = 30, verbose: bool = True) -> pd.DataFrame: 
+        
+        if verbose: 
+            print("Getting the Alpha of Returns Spread")
+        
+        out_path = os.path.join(self.prep_path, "RtnAlpha.parquet")
+        in_path  = os.path.join(self.prep_path, "Rtn.parquet")
+        
+        if os.path.exists(out_path): 
+            if verbose: print("Saving data\n")
+            return None
+        
+        df_alpha = (pd
+            .read_parquet(path = in_path, engine = "pyarrow")
+            .loc[lambda x: (x.asset == "etf")]
+            .drop(columns = ["hedge", "asset"])
+            .set_index("date")
+            .assign(name = lambda x: x.fi_ticker + "-" + x.fa_ticker)
+            .groupby("name")
+            .progress_apply(lambda group: self._get_rolling_alpha(group))
+            .reset_index())
+        
+        if verbose: print("\nSaving data\n")
+        df_alpha.to_parquet(path = out_path, engine = "pyarrow")
+        
+    def get_yield_spread(self, verbose: bool = True) -> pd.DataFrame: 
+        
+        if verbose: 
+            print("Getting Yield Spread data")
+        
+        in_path  = os.path.join(self.raw_path, "BondFundamentalExtra.parquet")
+        out_path = os.path.join(self.prep_path, "YldSprd.parquet") 
+        
+        if os.path.exists(out_path):
+            if verbose: print("Already have data\n")
+            return None
+        
+        df_spread = (pd
+                .read_parquet(path = in_path, engine = "pyarrow")
+                .assign(security = lambda x: x.security.str.split(" ").str[0])
+                .pivot(index = ["date", "variable"], columns = "security", values = "value")
+                .apply(lambda x: np.log(x))
+                .reset_index()
+                .melt(id_vars = ["date", "variable", "ANGL"])
+                .dropna()
+                .assign(spread = lambda x: x.ANGL - x.value))
+        
+        if verbose: print("Saving data\n")
+        df_spread.to_parquet(path = out_path, engine = "pyarrow")
+        
+    def _get_zscore(self, df: pd.DataFrame, window: int) -> pd.DataFrame: 
+        
+        df_out = (df
+                .assign(
+                    spread_diff = lambda x: x.spread.diff(),
+                    z_score     = lambda x: 
+                        (x.spread_diff - x.spread_diff.ewm(span = window, adjust = False).mean()) /
+                        x.spread_diff.ewm(span = window, adjust = False).std(),
+                    lag_zscore = lambda x: x.z_score.shift()))
+            
+        return df_out
+        
+    def get_exogenous_variables(self, window: int = 30, verbose: bool = True) -> None: 
+        
+        if verbose: print("Getting Exogenous Data")
+        
+        in_path  = os.path.join(self.raw_path, "ETFData.parquet")
+        out_path = os.path.join(self.prep_path, "ExogData.parquet")
+        
+        if os.path.exists(out_path):
+            if verbose: print("Already have data\n")
+            return None
+        
+        df_out  = (pd
+                .read_parquet(path = in_path)
+                .assign(security = lambda x: x.security.str.split(" ").str[0])
+                .pivot(index = ["date", "variable"], columns = "security", values = "value")
+                .reset_index()
+                .melt(id_vars = ["date", "variable", "HYG", "JNK"], var_name = "ig_ticker", value_name = "ig_val")
+                .melt(id_vars = ["date", "variable", "ig_ticker", "ig_val"], var_name = "hy_ticker", value_name = "hy_val")
+                .dropna()
+                .assign(
+                    spread = lambda x: x.hy_val - x.ig_val,
+                    name   = lambda x: x.hy_ticker + "-" + x.ig_ticker + "-" + x.variable)
+                .set_index("date")
+                .groupby("name")
+                .progress_apply(lambda group: self._get_zscore(group, window))
+                .reset_index()
+                .drop(columns = ["name"]))
+        
+        if verbose: print("Saving data\n")
+        df_out.to_parquet(path = out_path, engine = "pyarrow")
+        
 def main() -> None: 
         
     data_prep = DataPrep()
     data_prep.prep_rtn()
+    data_prep.get_alpha()
+    data_prep.get_yield_spread()
+    data_prep.get_exogenous_variables()
     
 if __name__ == "__main__": main()
