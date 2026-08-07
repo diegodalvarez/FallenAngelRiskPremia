@@ -256,6 +256,54 @@ class DataPrep:
         if verbose: print("Saving data\n")
         df_out.to_parquet(path = out_path, engine = "pyarrow")
         
+    def _get_zscore(self, df: pd.DataFrame, window: int) -> pd.DataFrame: 
+        
+        df_out = (df
+                .sort_values("date")
+                .assign(
+                    spread_diff = lambda x: x.spread.diff(),
+                    z_score     = lambda x: 
+                        (x.spread_diff - x.spread_diff.ewm(span = window, adjust = False).mean()) /
+                        x.spread_diff.ewm(span = window, adjust = False).std()))
+            
+        return df_out
+        
+    def _get_exog(self, window: int = 30, verbose: bool = True) -> None: 
+        
+        if verbose: print("Getting Exogenous Data")
+        
+        in_path  = os.path.join(self.data_path, "RawData", "ETFData.parquet")
+        out_path = os.path.join(self.prep_path, "ExogData.parquet")
+        
+        if os.path.exists(out_path):
+            if verbose: print("Already have data\n")
+            return None
+        
+        df_out = (pd
+            .read_parquet(path = in_path, engine = "pyarrow")
+            .assign(security = lambda x: x.security.str.split(" ").str[0])
+            .pivot(index = ["date", "variable"], columns = "security", values = "value")
+            .reset_index()
+            .melt(
+                id_vars    = ["date", "variable", "HYG", "JNK"], 
+                var_name   = "ig_ticker", 
+                value_name = "ig_val")
+            .melt(
+                id_vars    = ["date", "variable", "ig_ticker", "ig_val"],
+                var_name   = "hy_ticker",
+                value_name = "hy_val")
+            .dropna()
+            .assign(
+                spread = lambda x: x.ig_val - x.hy_val,
+                name   = lambda x: x.variable + " " + x.hy_ticker + " " + x.ig_ticker)
+            .groupby("name")
+            .apply(self._get_zscore, window)
+            .reset_index()
+            .drop(columns = ["level_1"]))
+        
+        if verbose: print("Saving data\n")
+        df_out.to_parquet(path = out_path, engine = "pyarrow")
+        
 def main() -> None: 
         
     data_prep = DataPrep()
