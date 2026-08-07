@@ -227,10 +227,6 @@ class SignalOptimizer:
         df_yld_mr = (pd
             .read_parquet(path = yld_path, engine = "pyarrow"))
         
-        df_rtn_tmp = (df_rtn_mr
-            .assign(signal_name = lambda x: x.name)
-            [["date", "signal_name", "signal"]])
-        
         df_yld_tmp = (df_yld_mr
             .assign(signal_name = lambda x: "ANGL " + x.security + " " + x.variable)
             [["date", "signal", "signal_name"]])
@@ -255,11 +251,21 @@ class SignalOptimizer:
         
         return df_signal
     
+    def _get_zscore(self, df: pd.DataFrame, window: int) -> pd.DataFrame: 
+        
+        df_out = (df
+                .sort_values("date")
+                .assign(
+                    spread_diff = lambda x: x.spread.diff(),
+                    z_score     = lambda x: 
+                        (x.spread_diff - x.spread_diff.ewm(span = window, adjust = False).mean()) /
+                        x.spread_diff.ewm(span = window, adjust = False).std()))
+            
+        return df_out
+    
     def optimize_signal(self, verbose: bool = True) -> None: 
         
         if verbose: print("Getting Optimized Mean Reversion Signal")
-        
-        files    = ["MeanReversionRtn.parquet", "YieldReversion.parquet"]
         out_path = os.path.join(self.opt_path, "MeanReversionOptSignal.parquet")
         
         if os.path.exists(out_path):
