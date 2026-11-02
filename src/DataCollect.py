@@ -238,13 +238,48 @@ class DataCollect:
         
         df_combined.to_parquet(path = out_path, engine = "pyarrow")
         
+    def get_equity_etf(self, verbose: bool = True) -> None:
+        
+        if verbose: print("Running ETF Px")
+        
+        out_path = os.path.join(self.raw_path, "EquityPX.parquet")
+        
+        if os.path.exists(out_path) == True: 
+            if verbose: print("Already have data\n")
+            return None
+        
+        if verbose: print("Collecting Pricing data from Yahoo")
+        
+        ticker_path = os.path.join(self.data_path, "FATickerGuide.xlsx")
+        etf_tickers = (pd.read_excel(
+            io = ticker_path, sheet_name = "EquityTickers").
+            Ticker.
+            to_list())
+        
+        df_out = (yf.download(
+            tickers     = etf_tickers,
+            start       = self.start_date,
+            end         = self.end_date,
+            auto_adjust = False).
+            reset_index().
+            melt(id_vars = [("Date","")]).
+            rename(columns = {
+                ("Date", ""): "date",
+                "Ticker"    : "ticker"}).
+            dropna())
+        
+        if verbose: print("Saving data\n")
+        df_out.to_parquet(path = out_path, engine = "pyarrow")
+        
 def main() -> None:
            
     data_collect = DataCollect()
-    data_collect.get_raw_px()
-    data_collect.get_clean_bond_fundamentals()
-    data_collect.get_extra_bond_fundamental()
-    data_collect.get_etf_info()
-    data_collect.get_index_total_return()
+    #data_collect.get_raw_px()
+    #data_collect.get_clean_bond_fundamentals()
+    #data_collect.get_extra_bond_fundamental()
+    #data_collect.get_etf_info()
+    #data_collect.get_index_total_return()
+    data_collect.get_equity_etf()
+    
     
 if __name__ == "__main__": main()
